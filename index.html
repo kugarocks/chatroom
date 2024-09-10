@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Den Den Mushi</title>
+    <style>
+        /* Simulating terminal style */
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-left: 20px; /* Increase left margin */
+        }
+
+        /* Chat container styles */
+        #chat-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* User list styles */
+        #user-list {
+            flex: 0 0 auto;
+            width: 20%;
+            min-width: 100px;
+            max-width: 50%;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+        }
+
+        @media screen and (max-width: 768px) {
+            #user-list {
+                width: 35%;
+            }
+        }
+
+        /* Chat content container styles */
+        #chat-content-container {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Chat area styles */
+        #chat {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            min-height: 100px; /* Set minimum height */
+        }
+
+        /* Horizontal resizer styles */
+        #resizer {
+            height: 5px;
+            background-color: #555;
+            cursor: ns-resize;
+        }
+
+        /* Input container styles */
+        #input-container {
+            padding: 10px;
+            box-sizing: border-box;
+            border-top: 1px solid gray;
+            height: 30%;
+            min-height: 100px; /* Increase minimum height */
+        }
+
+        /* Textarea styles */
+        textarea {
+            width: 100%;
+            height: calc(100% - 20px); /* Subtract padding */
+            background-color: black;
+            color: white;
+            border: none; /* Remove border */
+            font-family: monospace;
+            resize: none;
+            outline: none; /* Remove outline on focus */
+            line-height: 1.5; /* Increase line height */
+            padding: 10px; /* Increase padding */
+        }
+
+        /* Message container styles */
+        .message-container {
+            margin-bottom: 30px; /* Increased from 20px to 30px */
+        }
+
+        /* Message styles */
+        .message {
+            border: 1px solid gray;
+            background-color: #333;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        /* Username styles */
+        .username {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px; /* Increased from 5px to 8px */
+        }
+
+        /* Copy button styles */
+        .copy-btn {
+            position: absolute;
+            right: 7px;
+            top: 7px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .copy-btn:hover {
+            background-color: #777;
+        }
+
+        /* Preserve line breaks */
+        .message-content {
+            white-space: pre-wrap;
+            line-height: 1.5; /* Increase line height */
+        }
+
+        /* Toast styles */
+        #toast {
+            visibility: hidden;
+            min-width: 200px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 10px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+        }
+
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 1s;
+        }
+
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        @keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+
+        /* User list item styles */
+        #users li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px; /* Increased from 10px to 15px */
+        }
+
+        @media screen and (max-width: 768px) {
+            #users li {
+                margin-left: -50px;
+            }
+        }
+
+        @media screen and (min-width: 769px) {
+            #users li {
+                margin-left: 0;
+            }
+        }
+
+        #users li.me {
+            color: lightgreen;
+        }
+
+        #users li.me::after {
+            content: ' [me]';
+            color: #888;
+        }
+
+        /* Current user's username styles in chat */
+        .username.me::after {
+            content: ' [me]';
+            color: #888;
+        }
+
+        /* Avatar styles */
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px; /* Rounded square */
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        /* Vertical resizer styles */
+        #vertical-resizer {
+            width: 5px;
+            background-color: #555;
+            cursor: ew-resize;
+            flex: 0 0 5px;
+        }
+
+        /* Current user's username color */
+        .username.me {
+            color: lightgreen;
+        }
+    </style>
+</head>
+<body>
+    <h1>Den Den Mushi</h1>
+
+    <div id="chat-container">
+        <div id="user-list">
+            <ul id="users"></ul>
+        </div>
+        <div id="vertical-resizer"></div>
+        <div id="chat-content-container">
+            <div id="chat"></div>
+            <div id="resizer"></div>
+            <div id="input-container">
+                <textarea id="message" placeholder="blablabla..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let username = '';
+        let pingInterval;
+
+        function connectWebSocket() {
+            ws = new WebSocket("ws://localhost:8080/ws");
+
+            ws.onopen = function() {
+                console.log("WebSocket connection established");
+                startPing();
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'message') {
+                    addMessageToChat(data.user, data.text);
+                } else if (data.type === 'userList') {
+                    updateUserList(data.users);
+                } else if (data.type === 'username') {
+                    username = data.username;
+                    console.log("Assigned username:", username);
+                    ws.send(JSON.stringify({ type: 'requestUserList' }));
+                    // Update user list after username is assigned
+                    updateUserList([username]);
+                } else if (data.type === 'pong') {
+                    console.log("Received pong");
+                }
+            };
+
+            ws.onclose = function() {
+                console.log('Connection closed');
+                stopPing();
+            };
+
+            ws.onerror = function(error) {
+                console.log('WebSocket error:', error);
+            };
+        }
+
+        function startPing() {
+            pingInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'ping' }));
+                    console.log("Sent ping");
+                }
+            }, 15000); // Send ping
+        }
+
+        function stopPing() {
+            clearInterval(pingInterval);
+        }
+
+        window.onload = function() {
+            connectWebSocket();
+            setTimeout(focusMessageInput, 100);
+        };
+
+        // Function to focus the message input
+        function focusMessageInput() {
+            const messageInput = document.getElementById('message');
+            if (messageInput) {
+                messageInput.focus();
+                // Move the cursor to the end of the text area
+                messageInput.setSelectionRange(messageInput.value.length, messageInput.value.length);
+            }
+        }
+
+        // Send message
+        function sendMessage() {
+            const input = document.getElementById('message');
+            const message = input.value.trim();
+            if (message !== '') {
+                ws.send(JSON.stringify({ type: 'message', text: message }));
+                input.value = '';
+                // Use setTimeout to ensure the input is focused after DOM updates
+                setTimeout(focusMessageInput, 0);
+            }
+        }
+
+        // Update user list
+        function updateUserList(onlineUsers) {
+            const userListElement = document.getElementById('users');
+            userListElement.innerHTML = '';
+
+            // Only proceed if username has been assigned
+            if (username) {
+                // Remove current user from the list and create a new sorted array
+                const otherUsers = onlineUsers.filter(user => user !== username);
+                const sortedUsers = [username, ...otherUsers];
+
+                sortedUsers.forEach(user => {
+                    const li = document.createElement('li');
+                    
+                    const avatar = document.createElement('img');
+                    const baseUsername = user.split('-')[0].toLowerCase();
+                    avatar.src = `img/${baseUsername}.jpg`;
+                    avatar.alt = user;
+                    avatar.className = 'avatar';
+                    
+                    const span = document.createElement('span');
+                    span.textContent = user;
+                    
+                    li.appendChild(avatar);
+                    li.appendChild(span);
+                    
+                    if (user === username) {
+                        li.className = 'me';
+                    }
+                    userListElement.appendChild(li);
+                });
+            }
+        }
+
+        // Add message to chat window
+        function addMessageToChat(user, messageText) {
+            const chat = document.getElementById('chat');
+
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'message-container';
+
+            const usernameDiv = document.createElement('div');
+            usernameDiv.className = 'username';
+
+            const avatar = document.createElement('img');
+            const baseUsername = user.split('-')[0].toLowerCase();
+            avatar.src = `img/${baseUsername}.jpg`;
+            avatar.alt = user;
+            avatar.className = 'avatar';
+
+            const usernameSpan = document.createElement('span');
+            usernameSpan.textContent = user;
+
+            usernameDiv.appendChild(avatar);
+            usernameDiv.appendChild(usernameSpan);
+
+            if (user === username) {
+                usernameDiv.classList.add('me');
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.textContent = messageText;
+
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-btn';
+            copyButton.textContent = 'Copy';
+            copyButton.onclick = function() {
+                copyToClipboard(messageText, copyButton);
+            };
+
+            messageDiv.appendChild(messageContent);
+            messageDiv.appendChild(copyButton);
+
+            messageContainer.appendChild(usernameDiv);
+            messageContainer.appendChild(messageDiv);
+
+            chat.appendChild(messageContainer);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        // Copy content to clipboard
+        function copyToClipboard(text, button) {
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            
+            // Change button text and revert after 1 second
+            button.textContent = 'OK';
+            setTimeout(() => {
+                button.textContent = 'Copy';
+            }, 1000);
+        }
+
+        // Handle key input: Enter to send, Shift+Enter for new line
+        document.getElementById('message').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Handle horizontal resizing
+        const resizer = document.getElementById('resizer');
+        const chatContainer = document.getElementById('chat-container');
+        const chat = document.getElementById('chat');
+        const inputContainer = document.getElementById('input-container');
+
+        let isResizing = false;
+
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+        });
+
+        function resize(e) {
+            if (!isResizing) return;
+            const containerHeight = chatContainer.offsetHeight;
+            const newChatHeight = e.clientY - chatContainer.offsetTop;
+            const newInputHeight = containerHeight - newChatHeight - resizer.offsetHeight;
+
+            if (newChatHeight > 100 && newInputHeight > 70) {
+                chat.style.height = newChatHeight + 'px';
+                inputContainer.style.height = newInputHeight + 'px';
+            }
+        }
+
+        function stopResize() {
+            isResizing = false;
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+        }
+
+        // Handle vertical resizing
+        const verticalResizer = document.getElementById('vertical-resizer');
+        const userList = document.getElementById('user-list');
+        const chatContentContainer = document.getElementById('chat-content-container');
+
+        let isVerticalResizing = false;
+
+        verticalResizer.addEventListener('mousedown', startVerticalResize);
+
+        function startVerticalResize(e) {
+            e.preventDefault();
+            isVerticalResizing = true;
+            document.addEventListener('mousemove', verticalResize);
+            document.addEventListener('mouseup', stopVerticalResize);
+        }
+
+        function verticalResize(e) {
+            if (!isVerticalResizing) return;
+            const containerRect = chatContainer.getBoundingClientRect();
+            const newUserListWidth = e.clientX - containerRect.left - 20;
+            const newChatContentWidth = containerRect.width - newUserListWidth - verticalResizer.offsetWidth;
+
+            if (newUserListWidth > 100 && newChatContentWidth > 200) {
+                userList.style.width = `${newUserListWidth}px`;
+                chatContentContainer.style.width = `${newChatContentWidth}px`;
+            }
+        }
+
+        function stopVerticalResize() {
+            isVerticalResizing = false;
+            document.removeEventListener('mousemove', verticalResize);
+            document.removeEventListener('mouseup', stopVerticalResize);
+        }
+    </script>
+</body>
+</html>
+
