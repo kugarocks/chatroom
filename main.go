@@ -80,11 +80,12 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
-			username := h.assignUsername(client)
-			h.broadcastUserList()
-			client.send <- []byte(fmt.Sprintf(`{"type":"username","username":"%s"}`, username))
+			// First, send the theme message
 			client.send <- []byte(fmt.Sprintf(`{"type":"theme","theme":"%s"}`, h.theme))
-			// Log the successful username assignment
+			// Then, assign username and send it
+			username := h.assignUsername(client)
+			client.send <- []byte(fmt.Sprintf(`{"type":"username","username":"%s"}`, username))
+			h.broadcastUserList()
 			log.Printf("Username assigned to client %s: %s", client.conn.RemoteAddr(), username)
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {

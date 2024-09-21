@@ -256,21 +256,19 @@
             ws.onmessage = function(event) {
                 const data = JSON.parse(event.data);
 
-                if (data.type === 'message') {
-                    addMessageToChat(data.user, data.text);
-                } else if (data.type === 'userList') {
-                    updateUserList(data.users);
+                if (data.type === 'theme') {
+                    currentTheme = data.theme;
+                    console.log("Theme set to:", currentTheme);
                 } else if (data.type === 'username') {
                     username = data.username;
                     console.log("Assigned username:", username);
                     ws.send(JSON.stringify({ type: 'requestUserList' }));
-                    // Update user list after username is assigned
-                    updateUserList([username]);
+                } else if (data.type === 'userList') {
+                    updateUserList(data.users);
+                } else if (data.type === 'message') {
+                    addMessageToChat(data.user, data.text);
                 } else if (data.type === 'pong') {
                     console.log("Received pong");
-                } else if (data.type === 'theme') {
-                    currentTheme = data.theme;
-                    console.log("Theme set to:", currentTheme);
                 }
             };
 
