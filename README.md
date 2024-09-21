@@ -16,7 +16,7 @@ Features
 - [x] Multi-line messages.
 - [x] Copy messages.
 - [x] Resize chat area.
-- [x] Themes: Minions(Default), OnePiece.
+- [x] Themes: Minions(Default), ONEPIECE.
 
 Setup
 -----

@@ -261,7 +261,7 @@ func main() {
 	flag.Parse()
 
 	// Set default theme if not specified
-	switch *theme {
+	switch strings.ToLower(*theme) {
 	case "onepiece":
 		break
 	default:
