@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Den Den Mushi</title>
+    <title>Mini Chat</title>
     <style>
         /* Simulating terminal style */
         body {
@@ -222,7 +222,7 @@
     </style>
 </head>
 <body>
-    <h1>Den Den Mushi</h1>
+    <h1>Mini Chat</h1>
 
     <div id="chat-container">
         <div id="user-list">
@@ -242,6 +242,7 @@
         let ws;
         let username = '';
         let pingInterval;
+        let currentTheme = '';
 
         function connectWebSocket() {
             ws = new WebSocket("ws://localhost:8080/ws");
@@ -249,6 +250,7 @@
             ws.onopen = function() {
                 console.log("WebSocket connection established");
                 startPing();
+                ws.send(JSON.stringify({ type: 'requestTheme' }));
             };
 
             ws.onmessage = function(event) {
@@ -266,6 +268,9 @@
                     updateUserList([username]);
                 } else if (data.type === 'pong') {
                     console.log("Received pong");
+                } else if (data.type === 'theme') {
+                    currentTheme = data.theme;
+                    console.log("Theme set to:", currentTheme);
                 }
             };
 
@@ -335,7 +340,7 @@
                     
                     const avatar = document.createElement('img');
                     const baseUsername = user.split('-')[0].toLowerCase();
-                    avatar.src = `img/${baseUsername}.jpg`;
+                    avatar.src = `img/${currentTheme}/${baseUsername}.jpg`;
                     avatar.alt = user;
                     avatar.className = 'avatar';
                     
@@ -365,7 +370,7 @@
 
             const avatar = document.createElement('img');
             const baseUsername = user.split('-')[0].toLowerCase();
-            avatar.src = `img/${baseUsername}.jpg`;
+            avatar.src = `img/${currentTheme}/${baseUsername}.jpg`;
             avatar.alt = user;
             avatar.className = 'avatar';
 

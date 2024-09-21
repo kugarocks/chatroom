@@ -35,22 +35,41 @@ type Hub struct {
 	userList       []string // Store user list order
 	usersMutex     sync.Mutex
 	availableNames []string
+	baseNames      []string
+	theme          string
 }
 
 // newHub creates a new Hub instance
-func newHub() *Hub {
-	return &Hub{
+func newHub(theme string) *Hub {
+	hub := &Hub{
 		clients:    make(map[*Client]bool),
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		users:      make(map[*Client]string),
 		userList:   make([]string, 0), // Initialize user list
-		availableNames: []string{
+		theme:      theme,
+	}
+
+	// Initialize baseNames based on the theme
+	switch theme {
+	case "onepiece":
+		hub.baseNames = []string{
 			"Luffy", "Zoro", "Nami", "Usopp", "Sanji", "Chopper",
 			"Robin", "Franky", "Brook",
-		},
+		}
+	default: // default is minions
+		hub.baseNames = []string{
+			"Stuart", "Kevin", "Bob", "Dave", "Jerry", "Phil",
+			"Tim", "Mark",
+		}
 	}
+
+	// Copy baseNames to availableNames
+	hub.availableNames = make([]string, len(hub.baseNames))
+	copy(hub.availableNames, hub.baseNames)
+
+	return hub
 }
 
 // run handles the main logic of the Hub
@@ -62,6 +81,7 @@ func (h *Hub) run() {
 			username := h.assignUsername(client)
 			h.broadcastUserList()
 			client.send <- []byte(fmt.Sprintf(`{"type":"username","username":"%s"}`, username))
+			client.send <- []byte(fmt.Sprintf(`{"type":"theme","theme":"%s"}`, h.theme))
 			// Log the successful username assignment
 			log.Printf("Username assigned to client %s: %s", client.conn.RemoteAddr(), username)
 		case client := <-h.unregister:
@@ -89,7 +109,7 @@ func (h *Hub) assignUsername(client *Client) string {
 	h.usersMutex.Lock()
 	defer h.usersMutex.Unlock()
 
-	// First, try to assign an available basic username
+	// Assign a name from availableNames if possible
 	if len(h.availableNames) > 0 {
 		username := h.availableNames[0]
 		h.availableNames = h.availableNames[1:]
@@ -98,14 +118,9 @@ func (h *Hub) assignUsername(client *Client) string {
 		return username
 	}
 
-	// If no basic usernames are available, use a name with a numeric suffix
-	baseNames := []string{
-		"Luffy", "Zoro", "Nami", "Usopp", "Sanji", "Chopper",
-		"Robin", "Franky", "Brook",
-	}
-
+	// If no basic usernames are available, use names with numeric suffixes
 	for i := 1; ; i++ {
-		for _, baseName := range baseNames {
+		for _, baseName := range h.baseNames {
 			newUsername := fmt.Sprintf("%s-%d", baseName, i)
 			if !h.isUsernameTaken(newUsername) {
 				h.users[client] = newUsername
@@ -238,11 +253,12 @@ func main() {
 	useSSL := flag.Bool("ssl", false, "Use SSL")
 	certFile := flag.String("cert", "", "SSL certificate file path")
 	keyFile := flag.String("key", "", "SSL private key file path")
+	theme := flag.String("theme", "minions", "Theme for characters: onepiece or minions(default)")
 
 	// Parse command line flags
 	flag.Parse()
 
-	hub := newHub()
+	hub := newHub(*theme)
 	go hub.run()
 
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
