@@ -113,8 +113,10 @@ func (h *Hub) assignUsername(client *Client) string {
 
 	// If there are still available basic usernames
 	if len(h.availableNames) > 0 {
+		// Randomly select an index
 		index := rand.Intn(len(h.availableNames))
 		username := h.availableNames[index]
+		// Remove the selected name from the available names list
 		h.availableNames = append(h.availableNames[:index], h.availableNames[index+1:]...)
 		h.users[client] = username
 		h.userList = append(h.userList, username)
@@ -122,18 +124,14 @@ func (h *Hub) assignUsername(client *Client) string {
 	}
 
 	// If no basic usernames are available, use a name with a numeric suffix
-	baseName := h.baseNames[rand.Intn(len(h.baseNames))]
-
-	// Find the smallest available number
-	i := 1
-	for {
+	for i := 2; ; i++ {
+		baseName := h.baseNames[rand.Intn(len(h.baseNames))]
 		newUsername := fmt.Sprintf("%s-%d", baseName, i)
 		if !h.isUsernameTaken(newUsername) {
 			h.users[client] = newUsername
 			h.userList = append(h.userList, newUsername)
 			return newUsername
 		}
-		i++
 	}
 }
 
@@ -260,9 +258,15 @@ func main() {
 	certFile := flag.String("cert", "", "SSL certificate file path")
 	keyFile := flag.String("key", "", "SSL private key file path")
 	theme := flag.String("theme", "minions", "Theme for characters: onepiece or minions(default)")
-
-	// Parse command line flags
 	flag.Parse()
+
+	// Set default theme if not specified
+	switch *theme {
+	case "onepiece":
+		break
+	default:
+		*theme = "minions"
+	}
 
 	hub := newHub(*theme)
 	go hub.run()
@@ -283,6 +287,6 @@ func main() {
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}
 
-	// Initialize the random number generator at the start of the main function
-	rand.Seed(time.Now().UnixNano())
+	// Initialize a new random number generator with a time-based seed
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 }
