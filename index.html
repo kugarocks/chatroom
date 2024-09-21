@@ -56,6 +56,8 @@
             overflow-y: auto;
             box-sizing: border-box;
             min-height: 100px; /* Set minimum height */
+            overflow-y: auto;
+            word-wrap: break-word;
         }
 
         /* Horizontal resizer styles */
@@ -72,6 +74,7 @@
             border-top: 1px solid gray;
             height: 30%;
             min-height: 100px; /* Increase minimum height */
+            position: relative;
         }
 
         /* Textarea styles */
@@ -86,6 +89,7 @@
             outline: none; /* Remove outline on focus */
             line-height: 1.5; /* Increase line height */
             padding: 10px; /* Increase padding */
+            padding-right: 80px; /* Make room for the send button */
         }
 
         /* Message container styles */
@@ -100,6 +104,10 @@
             padding: 10px;
             border-radius: 5px;
             position: relative;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            margin-bottom: 10px;
         }
 
         /* Username styles */
@@ -223,7 +231,7 @@
         /* Added styles for GitHub link */
         .header-container {
             display: flex;
-            align-items: flex-end;  /* 改为底部对齐 */
+            align-items: flex-end;  /* Align to the bottom */
             margin-bottom: 20px;
         }
 
@@ -238,13 +246,43 @@
             font-size: 14px;
             display: flex;
             align-items: center;
-            margin-bottom: 5px;  /* 添加底部边距，微调对齐 */
+            margin-bottom: 5px;  /* Add bottom margin for fine-tuning alignment */
         }
 
         .github-link img {
             width: 20px;
             height: 20px;
             margin-right: 5px;
+        }
+
+        #send-button {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #send-button:hover {
+            background-color: #777;
+        }
+
+        /* Add styles for code blocks within messages */
+        .message pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 3px;
+        }
+
+        .message code {
+            font-family: monospace;
         }
     </style>
 </head>
@@ -266,7 +304,8 @@
             <div id="chat"></div>
             <div id="resizer"></div>
             <div id="input-container">
-                <textarea id="message" placeholder="blablabla..."></textarea>
+                <textarea id="message" placeholder="Press Enter to send"></textarea>
+                <button id="send-button">Send</button>
             </div>
         </div>
     </div>
@@ -528,6 +567,9 @@
             document.removeEventListener('mousemove', verticalResize);
             document.removeEventListener('mouseup', stopVerticalResize);
         }
+
+        // Added event listener for send button
+        document.getElementById('send-button').addEventListener('click', sendMessage);
     </script>
 </body>
 </html>
