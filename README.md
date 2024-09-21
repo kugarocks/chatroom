@@ -3,7 +3,7 @@ Mini Chat
 
 Terminal-style chat room created by Cursor.
 
-![Demo](img/onepiece/demo.png)
+![Demo](img/minions/mini-chat-cover.jpg)
 
 Live Demo
 ---------
