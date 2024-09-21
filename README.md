@@ -55,14 +55,14 @@ Minions
 ONPIECE
 ---------
 
-| 路飞                         | 索隆                         | 娜美                         |
-|:---------------------------:|:---------------------------:|:---------------------------:|
-| ![路飞](img/onepiece/luffy.jpg) | ![索隆](img/onepiece/zoro.jpg) | ![娜美](img/onepiece/nami.jpg) |
+| Luffy                         | Zoro                         | Nami                         |
+|:-----------------------------:|:----------------------------:|:----------------------------:|
+| ![Luffy](img/onepiece/luffy.jpg) | ![Zoro](img/onepiece/zoro.jpg) | ![Nami](img/onepiece/nami.jpg) |
 
-| 乌索普                         | 山治                          | 乔巴                            |
-|:----------------------------:|:----------------------------:|:------------------------------:|
-| ![乌索普](img/onepiece/usopp.jpg) | ![山治](img/onepiece/sanji.jpg) | ![乔巴](img/onepiece/chopper.jpg) |
+| Usopp                         | Sanji                          | Chopper                            |
+|:-----------------------------:|:------------------------------:|:----------------------------------:|
+| ![Usopp](img/onepiece/usopp.jpg) | ![Sanji](img/onepiece/sanji.jpg) | ![Chopper](img/onepiece/chopper.jpg) |
 
-| 罗宾                         | 弗兰奇                           | 布鲁克                          |
-|:---------------------------:|:-------------------------------:|:-----------------------------:|
-| ![罗宾](img/onepiece/robin.jpg) | ![弗兰奇](img/onepiece/franky.jpg) | ![布鲁克](img/onepiece/brook.jpg) |
+| Robin                         | Franky                           | Brook                          |
+|:-----------------------------:|:--------------------------------:|:------------------------------:|
+| ![Robin](img/onepiece/robin.jpg) | ![Franky](img/onepiece/franky.jpg) | ![Brook](img/onepiece/brook.jpg) |
