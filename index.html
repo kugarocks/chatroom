@@ -219,10 +219,43 @@
         .username.me {
             color: lightgreen;
         }
+
+        /* Added styles for GitHub link */
+        .header-container {
+            display: flex;
+            align-items: flex-end;  /* 改为底部对齐 */
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            margin-right: 15px;
+            margin-bottom: 0;
+        }
+
+        .github-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;  /* 添加底部边距，微调对齐 */
+        }
+
+        .github-link img {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
-    <h1>Mini Chat</h1>
+    <div class="header-container">
+        <h1>Mini Chat</h1>
+        <a href="https://github.com/kugarocks/minichat" target="_blank" class="github-link">
+            <img src="img/GitHub-Mark.png" alt="GitHub">
+            GitHub
+        </a>
+    </div>
 
     <div id="chat-container">
         <div id="user-list">
