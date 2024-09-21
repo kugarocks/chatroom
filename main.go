@@ -5,9 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -109,25 +111,29 @@ func (h *Hub) assignUsername(client *Client) string {
 	h.usersMutex.Lock()
 	defer h.usersMutex.Unlock()
 
-	// Assign a name from availableNames if possible
+	// If there are still available basic usernames
 	if len(h.availableNames) > 0 {
-		username := h.availableNames[0]
-		h.availableNames = h.availableNames[1:]
+		index := rand.Intn(len(h.availableNames))
+		username := h.availableNames[index]
+		h.availableNames = append(h.availableNames[:index], h.availableNames[index+1:]...)
 		h.users[client] = username
 		h.userList = append(h.userList, username)
 		return username
 	}
 
-	// If no basic usernames are available, use names with numeric suffixes
-	for i := 1; ; i++ {
-		for _, baseName := range h.baseNames {
-			newUsername := fmt.Sprintf("%s-%d", baseName, i)
-			if !h.isUsernameTaken(newUsername) {
-				h.users[client] = newUsername
-				h.userList = append(h.userList, newUsername)
-				return newUsername
-			}
+	// If no basic usernames are available, use a name with a numeric suffix
+	baseName := h.baseNames[rand.Intn(len(h.baseNames))]
+
+	// Find the smallest available number
+	i := 1
+	for {
+		newUsername := fmt.Sprintf("%s-%d", baseName, i)
+		if !h.isUsernameTaken(newUsername) {
+			h.users[client] = newUsername
+			h.userList = append(h.userList, newUsername)
+			return newUsername
 		}
+		i++
 	}
 }
 
@@ -276,4 +282,7 @@ func main() {
 		fmt.Printf("HTTP server started, listening on port %s\n", *port)
 		log.Fatal(http.ListenAndServe(addr, nil))
 	}
+
+	// Initialize the random number generator at the start of the main function
+	rand.Seed(time.Now().UnixNano())
 }
